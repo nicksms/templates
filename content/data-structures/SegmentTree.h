@@ -1,30 +1,35 @@
 /**
- * Author: Lucian Bicsi
- * Date: 2017-10-31
- * License: CC0
- * Source: folklore
- * Description: Zero-indexed max-tree. Bounds are inclusive to the left and exclusive to the right. Can be changed by modifying T, f and unit.
+ * Description: 1D point update and range query where \texttt{cmb} is
+ 	* any associative operation. \texttt{seg[1]==query(0,N-1)}.
  * Time: O(\log N)
- * Status: stress-tested
+ * Source: 
+	* http://codeforces.com/blog/entry/18051
+	* KACTL
+ * Verification: SPOJ Fenwick
  */
-#pragma once
 
-struct Tree {
-	typedef int T;
-	static constexpr T unit = INT_MIN;
-	T f(T a, T b) { return max(a, b); } // (any associative fn)
-	vector<T> s; int n;
-	Tree(int n = 0, T def = unit) : s(2*n, def), n(n) {}
-	void update(int pos, T val) {
-		for (s[pos += n] = val; pos /= 2;)
-			s[pos] = f(s[pos * 2], s[pos * 2 + 1]);
-	}
-	T query(int b, int e) { // query [b, e)
-		T ra = unit, rb = unit;
-		for (b += n, e += n; b < e; b /= 2, e /= 2) {
-			if (b % 2) ra = f(ra, s[b++]);
-			if (e % 2) rb = f(s[--e], rb);
+tcT> struct SegTree { // cmb(ID,b) = b
+	const T ID{}; T cmb(T a, T b) { return a+b; } 
+	int n; V<T> seg;
+	void init(int _n) { // upd, query also work if n = _n
+		for (n = 1; n < _n; ) n *= 2; 
+		seg.assign(2*n,ID); }
+	void pull(int p) { seg[p] = cmb(seg[2*p],seg[2*p+1]); }
+	void upd(int p, T val) { // set val at position p
+		seg[p += n] = val; for (p /= 2; p; p /= 2) pull(p); }
+	T query(int l, int r) {	// zero-indexed, inclusive
+		T ra = ID, rb = ID;
+		for (l += n, r += n+1; l < r; l /= 2, r /= 2) {
+			if (l&1) ra = cmb(ra,seg[l++]);
+			if (r&1) rb = cmb(seg[--r],rb);
 		}
-		return f(ra, rb);
+		return cmb(ra,rb);
 	}
+	/// int first_at_least(int lo, int val, int ind, int l, int r) { // if seg stores max across range
+	/// 	if (r < lo || val > seg[ind]) return -1;
+	/// 	if (l == r) return l;
+	/// 	int m = (l+r)/2;
+	/// 	int res = first_at_least(lo,val,2*ind,l,m); if (res != -1) return res;
+	/// 	return first_at_least(lo,val,2*ind+1,m+1,r);
+	/// }
 };

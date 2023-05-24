@@ -1,31 +1,31 @@
 /**
- * Author: Johan Sannemo, pajenegod
- * Date: 2015-02-06
- * License: CC0
- * Source: Folklore
- * Description: Range Minimum Queries on an array. Returns
- * min(V[a], V[a + 1], ... V[b - 1]) in constant time.
- * Usage:
- *  RMQ rmq(values);
- *  rmq.query(inclusive, exclusive);
- * Time: $O(|V| \log |V| + Q)$
- * Status: stress-tested
+ * Description: 1D range minimum query. If TL is an issue, use 
+	* arrays instead of vectors and store values instead of indices.
+ * Source: KACTL
+ * Verification: 
+	* https://cses.fi/problemset/stats/1647/
+	* http://wcipeg.com/problem/ioi1223
+	* https://pastebin.com/ChpniVZL
+ * Memory: O(N\log N)
+ * Time: O(1)
  */
-#pragma once
 
-template<class T>
-struct RMQ {
-	vector<vector<T>> jmp;
-	RMQ(const vector<T>& V) : jmp(1, V) {
-		for (int pw = 1, k = 1; pw * 2 <= sz(V); pw *= 2, ++k) {
-			jmp.emplace_back(sz(V) - pw * 2 + 1);
-			rep(j,0,sz(jmp[k]))
-				jmp[k][j] = min(jmp[k - 1][j], jmp[k - 1][j + pw]);
+tcT> struct RMQ { // floor(log_2(x))
+	int level(int x) { return 31-__builtin_clz(x); }
+	V<T> v; V<vi> jmp;
+	int cmb(int a, int b) {
+		return v[a]==v[b]?min(a,b):(v[a]<v[b]?a:b); }
+	void init(const V<T>& _v) {
+		v = _v; jmp = {vi(sz(v))};
+		iota(all(jmp[0]),0);
+		for (int j = 1; 1<<j <= sz(v); ++j) {
+			jmp.pb(vi(sz(v)-(1<<j)+1));
+			F0R(i,sz(jmp[j])) jmp[j][i] = cmb(jmp[j-1][i],
+				jmp[j-1][i+(1<<(j-1))]);
 		}
 	}
-	T query(int a, int b) {
-		assert(a < b); // or return inf if a == b
-		int dep = 31 - __builtin_clz(b - a);
-		return min(jmp[dep][a], jmp[dep][b - (1 << dep)]);
-	}
+	int index(int l, int r) { // kat is rex instead
+		assert(l <= r); int d = level(r-l+1);
+		return cmb(jmp[d][l],jmp[d][r-(1<<d)+1]); }
+	T query(int l, int r) { return v[index(l,r)]; }
 };

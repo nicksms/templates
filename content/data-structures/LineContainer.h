@@ -1,42 +1,39 @@
 /**
- * Author: Simon Lindholm
- * Date: 2017-04-20
- * License: CC0
- * Source: own work
- * Description: Container where you can add lines of the form kx+m, and query maximum values at points x.
- *  Useful for dynamic programming (``convex hull trick'').
+ * Description: Add lines of the form $ax+b$, 
+ 	* query maximum $y$-coordinate for any $x$.
  * Time: O(\log N)
- * Status: stress-tested
+ * Source: KACTL
+   * https://github.com/kth-competitive-programming/kactl/commit/165807e28402c9be906f6e6a09452431787bb70d?diff=unified
+ * Verification: https://judge.yosupo.jp/problem/line_add_get_min
  */
-#pragma once
 
+using T = ll; const T INF = LLONG_MAX; // a/b rounded down
+// ll fdiv(ll a, ll b) { return a/b-((a^b)<0&&a%b); }
+
+bool _Q = 0;
 struct Line {
-	mutable ll k, m, p;
-	bool operator<(const Line& o) const { return k < o.k; }
-	bool operator<(ll x) const { return p < x; }
+	T a, b; mutable T lst;
+	/// friend str ts(const Line& L) { return ts(vl{L.a,L.b,L.lst}); }
+	T eval(T x) const { return a*x+b; }
+	bool operator<(const Line&o)const{return _Q?lst<o.lst:a<o.a;}
+	T last_gre(const Line& o) const { assert(a <= o.a); 
+		// greatest x s.t. a*x+b >= o.a*x+o.b
+		return lst=(a==o.a?(b>=o.b?INF:-INF):fdiv(b-o.b,o.a-a));}
 };
 
-struct LineContainer : multiset<Line, less<>> {
-	// (for doubles, use inf = 1/.0, div(a,b) = a/b)
-	static const ll inf = LLONG_MAX;
-	ll div(ll a, ll b) { // floored division
-		return a / b - ((a ^ b) < 0 && a % b); }
-	bool isect(iterator x, iterator y) {
-		if (y == end()) return x->p = inf, 0;
-		if (x->k == y->k) x->p = x->m > y->m ? inf : -inf;
-		else x->p = div(y->m - x->m, x->k - y->k);
-		return x->p >= y->p;
+struct LineContainer: multiset<Line> {
+	bool isect(iterator it) { auto n_it = next(it);
+		if (n_it == end()) return it->lst = INF, 0;
+		return it->last_gre(*n_it) >= n_it->lst; }
+	void add(T a, T b) { /// remove lines after
+		auto it = ins({a,b,0}); while (isect(it)) erase(next(it));
+		if (it == begin()) return;
+		if (isect(--it)) erase(next(it)), isect(it);
+		while (it != begin()) { /// remove lines before
+			--it; if (it->lst < next(it)->lst) break;
+			erase(next(it)); isect(it); }
 	}
-	void add(ll k, ll m) {
-		auto z = insert({k, m, 0}), y = z++, x = y;
-		while (isect(y, z)) z = erase(z);
-		if (x != begin() && isect(--x, y)) isect(x, y = erase(y));
-		while ((y = x) != begin() && (--x)->p >= y->p)
-			isect(x, erase(y));
-	}
-	ll query(ll x) {
-		assert(!empty());
-		auto l = *lower_bound(x);
-		return l.k * x + l.m;
-	}
+	T qmax(T x) { assert(!empty()); 
+		_Q = 1; T res = lb({0,0,x})->eval(x); _Q = 0;
+		return res; }
 };
