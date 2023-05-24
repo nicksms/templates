@@ -1,30 +1,24 @@
 /**
- * Author: Simon Lindholm
- * Date: 2015-02-11
- * License: CC0
- * Source: Wikipedia
- * Description: Fast integration using an adaptive Simpson's rule.
- * Usage:
-	double sphereVolume = quad(-1, 1, [](double x) {
-	return quad(-1, 1, [\&](double y) {
-	return quad(-1, 1, [\&](double z) {
-	return x*x + y*y + z*z < 1; });});});
- * Status: mostly untested
+ * Description: Unused. Fast integration using adaptive Simpson's rule,
+ 	* exact for polynomials of degree up to 5.
+ * Source: KACTL
+	* https://en.wikipedia.org/wiki/Adaptive_Simpson%27s_method
+ * Verification: ?
+ * Usage: 
+	db z, y;
+	db h(db x) { return x*x + y*y + z*z <= 1; }
+	db g(db y) { ::y = y; return quad(h, -1, 1); }
+	db f(db z) { ::z = z; return quad(g, -1, 1); }
+	db sphereVol = quad(f,-1,1), pi = sphereVol*3/4;
  */
-#pragma once
 
-typedef double d;
-#define S(a,b) (f(a) + 4*f((a+b) / 2) + f(b)) * (b-a) / 6
-
-template <class F>
-d rec(F& f, d a, d b, d eps, d S) {
-	d c = (a + b) / 2;
-	d S1 = S(a, c), S2 = S(c, b), T = S1 + S2;
-	if (abs(T - S) <= 15 * eps || b - a < 1e-10)
-		return T + (T - S) / 15;
-	return rec(f, a, c, eps / 2, S1) + rec(f, c, b, eps / 2, S2);
+template<class F> db simpson(F f, db a, db b) {
+	db c = (a+b)/2; return (f(a)+4*f(c)+f(b))*(b-a)/6; }
+template<class F> db rec(F& f, db a, db b, db eps, db S) {
+	db c = (a+b)/2;
+	db S1 = simpson(f,a,c), S2 = simpson(f,c,b), T = S1+S2;
+	if (abs(T-S)<=15*eps || b-a<1e-10) return T+(T-S)/15;
+	return rec(f,a,c,eps/2,S1)+rec(f,c,b,eps/2,S2);
 }
-template<class F>
-d quad(d a, d b, F f, d eps = 1e-8) {
-	return rec(f, a, b, eps, S(a, b));
-}
+template<class F> db quad(F f, db a, db b, db eps = 1e-8) {
+	return rec(f,a,b,eps,simpson(f,a,b)); }

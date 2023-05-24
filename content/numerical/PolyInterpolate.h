@@ -1,25 +1,32 @@
 /**
- * Author: Simon Lindholm
- * Date: 2017-05-10
- * License: CC0
- * Source: Wikipedia
- * Description: Given $n$ points (x[i], y[i]), computes an n-1-degree polynomial $p$ that
- *  passes through them: $p(x) = a[0]*x^0 + ... + a[n-1]*x^{n-1}$.
- *  For numerical precision, pick $x[k] = c*\cos(k/(n-1)*\pi), k=0 \dots n-1$.
+ * Description: $n$ points determine unique polynomial of degree $\le n-1$.
+ 	* For numerical precision pick $v[k].f = c*\cos(k/(n-1)*\pi), k=0 \dots n-1$.
  * Time: O(n^2)
+ * Source: KACTL
+ * Verification: see FFT
  */
-#pragma once
 
-typedef vector<double> vd;
-vd interpolate(vd x, vd y, int n) {
-	vd res(n), temp(n);
-	rep(k,0,n-1) rep(i,k+1,n)
-		y[i] = (y[i] - y[k]) / (x[i] - x[k]);
-	double last = 0; temp[0] = 1;
-	rep(k,0,n) rep(i,0,n) {
-		res[i] += y[k] * temp[i];
-		swap(last, temp[i]);
-		temp[i] -= last * x[k];
-	}
+ #include "Poly.h"
+
+poly interpolate(V<pair<T,T>> v) {
+	poly res, tmp{1};
+	F0R(i,sz(v)) { T prod = 1; // add one point at a time
+		F0R(j,i) v[i].s -= prod*v[j].s, prod *= v[i].f-v[j].f;
+		v[i].s /= prod; res += v[i].s*tmp; tmp *= poly{-v[i].f,1};
+	} // add multiple of (x-v[0].f)*(x-v[1].f)*...*(x-v[i-1].f)
 	return res;
 }
+/**
+poly _interpolate(vector<pair<T,T>> v) {
+	poly ret, prod = {1}; each(t,v) prod *= poly({-t.f,1});
+	F0R(i,sz(v)) {
+		T fac = 1; F0R(j,sz(v)) if (i != j) fac *= v[i].f-v[j].f;
+		ret += v[i].s/fac*quoRem(prod,{-v[i].f,1}).f;
+	}
+	return ret;
+}
+
+vector<pair<T,T>> v; poly p = {4,6,7,11}, x = {1,3,9,16};
+each(X,x) v.pb({X,eval(p,X)});
+ps(interpolate(v));
+*/
