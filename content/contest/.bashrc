@@ -1,3 +1,3 @@
-alias c='g++ -Wall -Wconversion -Wfatal-errors -g -std=c++14 \
-	-fsanitize=undefined,address'
-xmodmap -e 'clear lock' -e 'keycode 66=less greater' #caps = <>
+alias clr="printf '\33c'"
+co() { g++ -std=c++17 -O2 -Wall -Wextra -Wshadow -Wconversion -o $1 $1.cpp; }
+run() { co $1 && ./$1; }

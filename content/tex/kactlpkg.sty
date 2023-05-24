@@ -195,17 +195,78 @@
 \lstset{language=C++}
 \lstset{morekeywords={alignas,alignof}}
 \lstset{deletedirectives={line}}
-\lstset{frame=t}
+\lstset{frame=t} % line on top of code block
 \lstset{tabsize=2}
 \lstset{showstringspaces=false}
-\lstset{breaklines=true}
+\lstset{breaklines=true,breakindent=12pt} 
+\lstset{postbreak=\raisebox{0ex}[0ex][0ex]{\color{darkgray}\ensuremath{\hookrightarrow}}} % arrow after break
+\lstset{stepnumber=1}
+\lstset{numberstyle=\footnotesize\color{black}}
+
+
+%%% TEXT
+% https://tex.stackexchange.com/questions/24599/what-point-pt-font-size-are-large-etc
+% tt family: monospaced typedwriter - https://www.tug.org/pracjourn/2006-1/schmidt/schmidt.pdf
+% http://texdoc.net/texmf-dist/doc/latex/listings/listings.pdf
+
+% https://tex.stackexchange.com/questions/240262/digit-zero-with-a-dot-inside-also-in-text-mode
+% \makeatletter
+\DeclareRobustCommand*{\pmzerodot}{%
+  \nfss@text{%
+    \sbox0{$\vcenter{}$}% math axis
+    \sbox2{0}%
+    \sbox4{0\/}%
+    \ooalign{%
+      0\cr
+      \hidewidth
+      \kern\dimexpr\wd4-\wd2\relax % compensate for slanted fonts
+      \raise\dimexpr(\ht2-\dp2)/2-\ht0\relax\hbox{%
+        \if b\expandafter\@car\f@series\@nil\relax
+          \mathversion{bold}%
+        \fi
+        $\cdot\m@th$%
+      }%
+      \hidewidth
+      \cr
+      \vphantom{0}% correct depth of final symbol
+    }%
+  }%
+}
+
+\newcommand*{\dotarabic}[1]{%
+  \expandafter\@dotarabic\csname c@#1\endcsname
+}
+\newcommand*{\@dotarabic}[1]{%
+  \expandafter\dotarabic@scan\number #1\relax
+}
+\newcommand*{\dotarabic@scan}[1]{%
+  \ifx\relax#1%
+    \expandafter\@gobble
+  \else
+    \expandafter\@firstofone
+  \fi
+  {%
+    \ifnum#1=0 %
+      \ifincsname
+        0%
+      \else
+        \pmzerodot
+      \fi
+    \else
+      #1%
+    \fi
+    \dotarabic@scan
+  }%
+}
+% \makeatother
+
 \lstset{basicstyle=\footnotesize\ttfamily}
-\lstset{commentstyle=\normalfont\itshape}
-\lstset{literate={^}{\caret}{1} {~}{\tilde}{1} {\{}{\nicelbrace}{1} {\}}{\nicerbrace}{1}}
+\lstset{literate={^}{\caret}{1} {~}{\tilde}{1} {\{}{\nicelbrace}{1} {\}}{\nicerbrace}{1} {0}{\pmzerodot}{1}}
 \lstset{emptylines=*1}
 \lstset{inputencoding=utf8}
 \lstset{aboveskip=3pt}
 \lstset{belowskip=2pt}
+
 
 \lstdefinelanguage{raw}{} % Raw language, no keywords.
 
